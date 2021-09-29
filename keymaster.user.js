@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.1.2
 // @description  try to take over the world!
 // @author       You
 // @match        https://www.digikey.com/en/products/*
@@ -41,8 +41,8 @@
     descriptionNoWrap();
     hideSupplierCol();
     trimTableWhiteSpace();
-
-
+    hideCompareText();
+    biggerThumbnail();
 
     console.log('ok');
 })();
@@ -113,6 +113,21 @@ function supplierMatch(){
           font-size: 13px;
        }
     `);
+}
+
+function hideCompareText(){
+    GM_addStyle(`
+        th[data-id="-99"]>div {display: none;}
+        th[data-id="-99"] {min-width:40px !important;}
+        table[data-testid="data-table-0"]>thead>tr>th:first-child {min-width:40px;}
+    `);
+}
+
+function biggerThumbnail(){
+     GM_addStyle(`
+     img[data-testid="data-table-0-product-image"] {width:64px; height:64px;}
+     td[data-atag="tr-product"] div>a>div { width:64px; height:64px;}
+     `);
 }
 // [data-testid="data-table-0"
 
