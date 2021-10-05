@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    http://tampermonkey.net/
-// @version      0.1.3
+// @version      0.1.4
 // @description  try to take over the world!
 // @author       You
 // @match        https://www.digikey.com/en/products/*
@@ -144,24 +144,64 @@ function biggerThumbnail(){
 
 function runPDP(){
     GM_addStyle(`
-    [data-testid="overview-supplier"] {display:none;}
-    [data-testid="std-lead-time"] {display:none;}
-    [data-testid="mfr-number"] {display:none;}
     #mfrlogo img {filter: invert(60%);}
-    [data-testid="overview-manufacturer"] + tr {display:none;}
+
     `)
     $('[data-testid="carousel-container"]').prepend('<div id=mfrlogo>');
-    var mfrlogo = $('[data-testid="overview-supplier"] a').attr('href');
-    var mfrlogostring = mfrlogo + ' .smc-logo:first img'
-    $('#mfrlogo').load(mfrlogo + ' .smc-logo:first img');
+    var mfrlogohref = $('[data-testid="overview-supplier"] a').attr('href');
+    $('#mfrlogo').load(mfrlogohref + ' .smc-logo:first img');
     console.log(mfrlogostring);
 
-    $('#cust-ref-input').attr('placeholder', 'Your Customer PN or Reference').closest('tr').find('td:first').text("Custom Info");
+    $('#cust-ref-input')
+        .attr('placeholder', 'Your Customer PN or Reference')
+        .attr('title','Text is printed on Invoice and Pick Label');
+    // $('#cust-ref-input').closest('tr').find('td:first').text("Custom Info");
     $('[data-evg="product-details-overview"] table>tbody').append($('[data-evg="product-details-overview"] table>tbody tr:first'));
+
+    addMoreDocs();
+    removeSupplier();
+    removeLeadTime();
+    removeMFRPN();
+     waitForKeyElements('[data-testid="price-and-procure-title"]',addNonStock);
 }
 
+function removeSupplier(){
+   GM_addStyle(`
+    [data-testid="overview-supplier"] {display:none;}
+   `);
+}
 
+function removeLeadTime(){
+   GM_addStyle(`
+    [data-testid="std-lead-time"] {display:none;}
+   `);
+}
+function removeMFRPN(){
+    //TODO maybe add an id to the mfr so we don't have to guess its hiding the next row
+    // this ides the row after mfr which happens to be mfrpn.
+    GM_addStyle(`
+        [data-testid="overview-manufacturer"] + tr {display:none;}
 
+    `);
+}
+
+function addNonStock(){
+$('[data-testid="price-and-procure-title"] span:contains(Available)').text("Availble to Order - Non-Stock")
+}
+
+function addMoreDocs(){
+    GM_addStyle(`
+        .moredocs {
+        float:right;
+    `);
+    $('[data-testid="datasheet-download"]').after('<a class=moredocs href=#docsmedia>');
+    $('[data-testid="docs-media-table"]').attr('id', 'docsmedia')
+    $('.moredocs').text('(see '+$('[data-testid="docs-media-table"] table tbody a').length +' more docs)')
+}
+
+function dimPackaging(){
+
+}
 
 
 
