@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    http://tampermonkey.net/
-// @version      0.1.2
+// @version      0.1.3
 // @description  try to take over the world!
 // @author       You
 // @match        https://www.digikey.com/en/products/*
 // @icon         https://www.google.com/s2/favicons?domain=digikey.com
 // @require      https://code.jquery.com/jquery-3.6.0.js
 // @grant        GM_addStyle
+//
+// @noframes
 // ==/UserScript==
 
 (function() {
@@ -35,20 +37,25 @@
 
     // $('table[data-testid="data-table-0"]>thead>tr>th').addclass('.css({'word-wrap': 'break-word', 'max-width': '15ch', 'white-space':'unset'});
     // $('td[data-atag="tr-manufacturer"]').
-    console.log('setting timeout');
-    setTimeout ( supplierMatch, 4000);
+    runPLP();
+
+    console.log('ok');
+
+    if(window.location.href.includes('detail')){
+         waitForKeyElements('#cust-ref-input',runPDP);
+    }
+})();
+
+function runPLP(){
+        setTimeout ( supplierMatch, 4000);
 
     descriptionNoWrap();
     hideSupplierCol();
     trimTableWhiteSpace();
     hideCompareText();
     biggerThumbnail();
-
-    console.log('ok');
-})();
-function a(selector){
-    return document.querySelectorAll(selector);
 }
+
 
 function descriptionNoWrap(){
      GM_addStyle(`
@@ -134,6 +141,122 @@ function biggerThumbnail(){
 
 
 
+
+function runPDP(){
+    GM_addStyle(`
+    [data-testid="overview-supplier"] {display:none;}
+    [data-testid="std-lead-time"] {display:none;}
+    [data-testid="mfr-number"] {display:none;}
+    #mfrlogo img {filter: invert(60%);}
+    [data-testid="overview-manufacturer"] + tr {display:none;}
+    `)
+    $('[data-testid="carousel-container"]').prepend('<div id=mfrlogo>');
+    var mfrlogo = $('[data-testid="overview-supplier"] a').attr('href');
+    var mfrlogostring = mfrlogo + ' .smc-logo:first img'
+    $('#mfrlogo').load(mfrlogo + ' .smc-logo:first img');
+    console.log(mfrlogostring);
+
+    $('#cust-ref-input').attr('placeholder', 'Your Customer PN or Reference').closest('tr').find('td:first').text("Custom Info");
+    $('[data-evg="product-details-overview"] table>tbody').append($('[data-evg="product-details-overview"] table>tbody tr:first'));
+}
+
+
+
+
+
+
+/*--- waitForKeyElements():  A utility function, for Greasemonkey scripts,
+    that detects and handles AJAXed content.
+
+    Usage example:
+
+        waitForKeyElements (
+            "div.comments"
+            , commentCallbackFunction
+        );
+
+        //--- Page-specific function to do what we want when the node is found.
+        function commentCallbackFunction (jNode) {
+            jNode.text ("This comment changed by waitForKeyElements().");
+        }
+
+    IMPORTANT: This function requires your script to have loaded jQuery.
+*/
+function waitForKeyElements (
+    selectorTxt,    /* Required: The jQuery selector string that
+                        specifies the desired element(s).
+                    */
+    actionFunction, /* Required: The code to run when elements are
+                        found. It is passed a jNode to the matched
+                        element.
+                    */
+    bWaitOnce,      /* Optional: If false, will continue to scan for
+                        new elements even after the first match is
+                        found.
+                    */
+    iframeSelector  /* Optional: If set, identifies the iframe to
+                        search.
+                    */
+) {
+    var targetNodes, btargetsFound;
+
+    if (typeof iframeSelector == "undefined")
+        targetNodes     = $(selectorTxt);
+    else
+        targetNodes     = $(iframeSelector).contents ()
+                                           .find (selectorTxt);
+
+    if (targetNodes  &&  targetNodes.length > 0) {
+        btargetsFound   = true;
+        /*--- Found target node(s).  Go through each and act if they
+            are new.
+        */
+        targetNodes.each ( function () {
+            var jThis        = $(this);
+            var alreadyFound = jThis.data ('alreadyFound')  ||  false;
+
+            if (!alreadyFound) {
+                //--- Call the payload function.
+                var cancelFound     = actionFunction (jThis);
+                if (cancelFound)
+                    btargetsFound   = false;
+                else
+                    jThis.data ('alreadyFound', true);
+            }
+        } );
+    }
+    else {
+        btargetsFound   = false;
+    }
+
+    //--- Get the timer-control variable for this selector.
+    var controlObj      = waitForKeyElements.controlObj  ||  {};
+    var controlKey      = selectorTxt.replace (/[^\w]/g, "_");
+    var timeControl     = controlObj [controlKey];
+
+    //--- Now set or clear the timer as appropriate.
+    if (btargetsFound  &&  bWaitOnce  &&  timeControl) {
+        //--- The only condition where we need to clear the timer.
+        clearInterval (timeControl);
+        delete controlObj [controlKey]
+    }
+    else {
+        //--- Set a timer, if needed.
+        if ( ! timeControl) {
+            timeControl = setInterval ( function () {
+                    waitForKeyElements (    selectorTxt,
+                                            actionFunction,
+                                            bWaitOnce,
+                                            iframeSelector
+                                        );
+                },
+                300
+            );
+            controlObj [controlKey] = timeControl;
+        }
+    }
+    waitForKeyElements.controlObj   = controlObj;
+}
 
 
 // var script = document.createElement('script');
