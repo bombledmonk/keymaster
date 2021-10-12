@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    http://tampermonkey.net/
-// @version      0.1.4
+// @version      0.1.3
 // @description  try to take over the world!
 // @author       You
 // @match        https://www.digikey.com/en/products/*
@@ -144,14 +144,18 @@ function biggerThumbnail(){
 
 function runPDP(){
     GM_addStyle(`
-    #mfrlogo img {filter: invert(60%);}
-
+    #mfrlogo img {
+        filter: invert(60%);
+        height: 50px;
+    }
+    #mfrlogo {
+        text-align:center;
+    }
+    .MuiContainer-maxWidthLg{max-width:1400px;}
     `)
     $('[data-testid="carousel-container"]').prepend('<div id=mfrlogo>');
     var mfrlogohref = $('[data-testid="overview-supplier"] a').attr('href');
     $('#mfrlogo').load(mfrlogohref + ' .smc-logo:first img');
-    console.log(mfrlogostring);
-
     $('#cust-ref-input')
         .attr('placeholder', 'Your Customer PN or Reference')
         .attr('title','Text is printed on Invoice and Pick Label');
@@ -162,7 +166,9 @@ function runPDP(){
     removeSupplier();
     removeLeadTime();
     removeMFRPN();
-     waitForKeyElements('[data-testid="price-and-procure-title"]',addNonStock);
+    waitForKeyElements('[data-testid="price-and-procure-title"]',doAfterPricingLoad);
+    rightAlignCols();
+    // waitForKeyElements('[data-testid="price-and-procure-title"]',zeroStockOtherSuppliers);
 }
 
 function removeSupplier(){
@@ -186,7 +192,18 @@ function removeMFRPN(){
 }
 
 function addNonStock(){
-$('[data-testid="price-and-procure-title"] span:contains(Available)').text("Availble to Order - Non-Stock")
+    if($('[data-testid="price-and-procure-title"] span').text().startsWith('Available')){
+        $('[data-testid="price-and-procure-title"] span').text("Availble to Order - Non-Stock")
+    }
+}
+
+function rightAlignCols(){
+    GM_addStyle(`
+    [data-evg="product-details-overview"] table>tbody>tr>td:first-child{
+        text-align:right;
+        padding-right:15px;
+    }
+    `);
 }
 
 function addMoreDocs(){
@@ -201,6 +218,46 @@ function addMoreDocs(){
 
 function dimPackaging(){
 
+}
+
+function zeroStockOtherSuppliers(){
+    console.log('zero instock with MP suplier')
+    if($('[data-testid="other-suppliers-title"]').length){
+        GM_addStyle(`
+           .othersup {
+           font-size: 10pt;
+           text-decoration:none;
+           }
+        `);
+        var mpCount = $('[data-testid="alternative-title-qty-msg"]:first>span').text();
+        $('[data-testid="other-suppliers-title"]').attr('id', 'othersuppliers');
+        $('[data-testid="price-and-procure-title"] span:contains("0 In Stock")')
+            .after(`<br><span class=othersup>Marketplace Stock:</span> <span class=othersup>${mpCount}</span> <a class=othersup href=#othersuppliers>View Now</a></span>`);
+        $('.othersup').click(function(e){
+            simulateMouseClick(document.querySelector('[data-testid="expand-pricing"]'));
+            console.log('clicked');
+        });
+    }
+}
+
+function doAfterPricingLoad(){
+    addNonStock();
+    zeroStockOtherSuppliers();
+}
+
+
+const mouseClickEvents = ['mousedown', 'click', 'mouseup'];
+function simulateMouseClick(element){
+  mouseClickEvents.forEach(mouseEventType =>
+    element.dispatchEvent(
+      new MouseEvent(mouseEventType, {
+          // view: window,
+          bubbles: true,
+          cancelable: true,
+          buttons: 1
+      })
+    )
+  );
 }
 
 
