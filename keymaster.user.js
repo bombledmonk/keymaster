@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    http://tampermonkey.net/
-// @version      0.1.3
+// @version      0.1.5
 // @description  try to take over the world!
 // @author       You
-// @match        https://www.digikey.com/en/products/*
+// @match        https://www.digikey.com/en/products*
 // @icon         https://www.google.com/s2/favicons?domain=digikey.com
 // @require      https://code.jquery.com/jquery-3.6.0.js
+// @require      https://unpkg.com/darkreader@4.9.44/darkreader.js
 // @grant        GM_addStyle
 //
 // @noframes
@@ -54,12 +55,22 @@ function runPLP(){
     trimTableWhiteSpace();
     hideCompareText();
     biggerThumbnail();
+    addDarkReader();
 }
 
-
+function addDarkReader(){
+    DarkReader.enable({
+        brightness: 100,
+        contrast: 90,
+        sepia: 10
+    });
+// Get the generated CSS of Dark Reader returned as a string.
+var CSS =  DarkReader.exportGeneratedCSS();
+console.log(CSS);
+}
 function descriptionNoWrap(){
      GM_addStyle(`
-         div[data-testid="data-table-0-product-description"] {white-space: nowrap;}
+         div[ref_page_event="Select Part"]>div {white-space: nowrap;}
     `);
 }
 
@@ -167,7 +178,7 @@ function runPDP(){
     removeLeadTime();
     removeMFRPN();
     waitForKeyElements('[data-testid="price-and-procure-title"]',doAfterPricingLoad);
-    rightAlignCols();
+    //rightAlignCols();
     // waitForKeyElements('[data-testid="price-and-procure-title"]',zeroStockOtherSuppliers);
 }
 
