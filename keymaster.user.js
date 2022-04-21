@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    http://tampermonkey.net/
-// @version      0.1.8
+// @version      0.1.8.1
 // @description  try to take over the world!
 // @author       You
 // @match        https://www.digikey.com/en/products*
@@ -20,6 +20,7 @@
 
 //changelog
 // 0.1.7  adding image hover preview for top results
+// 0.1.8.1 fixed HTML datasheet text color
 
 var DLOG = true;
 var starttimestamp = Date.now();
@@ -368,6 +369,9 @@ function loadHTMLDatasheets(){
         $('#htmlds').load(htmldatasheet, function(){
             $(this).find('#header,#footer').hide();
         });
+        GM_addStyle(`
+        .fc0 {color: rgba(13, 8, 0, 0.95) !important;}
+        `);
     }catch(e){
         console.log('error loading html datasheet');
     }
