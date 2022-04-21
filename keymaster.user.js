@@ -1,23 +1,39 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    http://tampermonkey.net/
-// @version      0.1.5
+// @version      0.1.8
 // @description  try to take over the world!
 // @author       You
 // @match        https://www.digikey.com/en/products*
 // @icon         https://www.google.com/s2/favicons?domain=digikey.com
 // @require      https://code.jquery.com/jquery-3.6.0.js
 // @require      https://unpkg.com/darkreader@4.9.44/darkreader.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/jquery.hoverintent/1.10.2/jquery.hoverIntent.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/tooltipster/4.2.8/js/tooltipster.bundle.min.js
+// @resource     tooltipstercss https://cdnjs.cloudflare.com/ajax/libs/tooltipster/4.2.8/css/tooltipster.bundle.min.css
 // @grant        GM_addStyle
+// @grant        GM_getResourceURL
 //
 // @noframes
 // ==/UserScript==
+
+
+//changelog
+// 0.1.7  adding image hover preview for top results
+
+var DLOG = true;
+var starttimestamp = Date.now();
+var sincelast = Date.now();
+var version = GM_info.script.version;
+var lastUpdate = '21-APR-22'; // I usually forget this
+// var $ = $; //supresses warnings in tampermonkey
 
 (function() {
     'use strict';
     // a('th[data-id="1989"]>div>div>span>div>span')[0].innerHTML = "Part</br>Status";
     // $('div["data-table-0-product-description"]');  /// document.create style g
     // document.create('style')
+
     GM_addStyle(`
          div[data-testid="data-table-0-product-description"] {white-space: nowrap;}
          th[data-id="-8"],td[data-atag="tr-supplier"] {display:none;}
@@ -39,12 +55,15 @@
     // $('table[data-testid="data-table-0"]>thead>tr>th').addclass('.css({'word-wrap': 'break-word', 'max-width': '15ch', 'white-space':'unset'});
     // $('td[data-atag="tr-manufacturer"]').
     runPLP();
-
-    console.log('ok');
+    console.log('ran PLP');
 
     if(window.location.href.includes('detail')){
          waitForKeyElements('#cust-ref-input',runPDP);
+         console.log('ran PDP');
     }
+    runIndexResults();
+    addResourceCSS();
+
 })();
 
 function runPLP(){
@@ -58,6 +77,85 @@ function runPLP(){
     addDarkReader();
 }
 
+function addResourceCSS() {
+    var cssNames = [
+        "tooltipstercss",
+    ];
+
+    for (var x in cssNames) {
+        var thetext = GM_getResourceURL(cssNames[x]);
+        _log('style tick 1' + cssNames[x], DLOG);
+        $('body').prepend('<link rel="stylesheet" href="' + thetext + '">');
+        // $('body').prepend('<link rel="stylesheet" href="data:text/css;base64,'+thetext+'">')
+        _log('style tick end' + cssNames[x], DLOG);
+        // _log('style tick start '+cssNames[x], DLOG);
+    }
+}
+
+function configTooltips(){
+        $.tooltipster.setDefaults({
+        content: '...loading',
+        trigger: 'hover',
+        delay: 350,
+        interactive: true,
+        side: 'bottom',
+        updateAnimation: null,
+        animation: 'fade',
+        theme: 'tooltipster-shadow',
+    });
+}
+
+
+function addTopResultsPreview(){
+    // $('[data-testid="result-top"]')
+   $('body').on('mouseenter', '[data-testid="result-top"] img:not(.tooltipstered)', doImageTooltip)
+}
+
+function doImageTooltip(){
+    // console.log('body entered for tooltip', this);
+    $(this).tooltipster({
+            content: 'Loading...',
+            // content: $('#clipmecontainer:last'),
+            'side': 'left',
+            'distance': 0,
+            'multiple': true,
+            'delay': 50,
+            'contentCloning': true,
+            'functionReady': function (instance, helper) {
+                console.log(helper.origin.src);
+                instance.content($(helper.origin).clone().height(250).width(250));
+                // $('.copyContent').html('<i class="fa fa-files-o"></i> Copy Text')
+                // $('.copyContent').attr('data-clipboard-text', $(helper.origin).text().trim());
+                // $('.copyFormattedContent').html('<i class="fa fa-files-o"></i> Copy Formatted Link')
+                // $('.copyFormattedContent').attr('data-clipboard-text', $(helper.origin).text().trim());
+                // // console.log('~~~~~~~~~~~~~~~~~', instance, helper);
+                // $(helper.tooltip).find('.tooltipster-content').css('padding', '2px')
+                // instance.reposition();
+            },
+        }).tooltipster('open');
+}
+
+
+
+function addPDPImageZoom(){
+console.log('image style started');
+
+     GM_addStyle(`
+                 div[data-testid="carousel-main-image"] img {transition: transform .1s ease-in-out;;
+                                                             transform-origin: top left;
+
+                                                            }
+                 div[data-testid="carousel-main-image"] img:hover {
+                                                                   transform: scale(3);
+                                                                   transform-origin: top left;
+                                                                   z-index: 100;
+                                                                   position:absolute;
+                                                                   transition-delay:.250s;
+                                                                  }
+  `);
+console.log('image style added');
+}
+
 function addDarkReader(){
     DarkReader.enable({
         brightness: 100,
@@ -65,15 +163,14 @@ function addDarkReader(){
         sepia: 10
     });
 // Get the generated CSS of Dark Reader returned as a string.
-var CSS =  DarkReader.exportGeneratedCSS();
 console.log(CSS);
 }
+
 function descriptionNoWrap(){
      GM_addStyle(`
          div[ref_page_event="Select Part"]>div {white-space: nowrap;}
     `);
 }
-
 
 function hideSupplierCol(){
     $('button[data-testid="sort--8-asc"]').closest('th').attr('data-id','-8');
@@ -83,6 +180,7 @@ function hideSupplierCol(){
 }
 
 function trimTableWhiteSpace(){
+    //plp table whitespace
     GM_addStyle(`
          th[data-id="-8"],td[data-atag="tr-supplier"] {display:none;}
          td[data-atag="tr-manufacturer"] {
@@ -178,6 +276,8 @@ function runPDP(){
     removeLeadTime();
     removeMFRPN();
     waitForKeyElements('[data-testid="price-and-procure-title"]',doAfterPricingLoad);
+    addPDPImageZoom();
+    loadHTMLDatasheets();
     //rightAlignCols();
     // waitForKeyElements('[data-testid="price-and-procure-title"]',zeroStockOtherSuppliers);
 }
@@ -193,6 +293,7 @@ function removeLeadTime(){
     [data-testid="std-lead-time"] {display:none;}
    `);
 }
+
 function removeMFRPN(){
     //TODO maybe add an id to the mfr so we don't have to guess its hiding the next row
     // this ides the row after mfr which happens to be mfrpn.
@@ -255,6 +356,84 @@ function doAfterPricingLoad(){
     addNonStock();
     zeroStockOtherSuppliers();
 }
+
+
+function loadHTMLDatasheets(){
+    try{
+        // Your code here...
+        var htmldatasheet = document.querySelectorAll('a[href*="htmldatasheets"')[0].href;
+        console.log(htmldatasheet);
+
+        $('main').append('<div id="htmlds">hello world</div>');
+        $('#htmlds').load(htmldatasheet, function(){
+            $(this).find('#header,#footer').hide();
+        });
+    }catch(e){
+        console.log('error loading html datasheet');
+    }
+}
+
+
+
+
+
+
+
+function runIndexResults(){
+    //fix index sidebar
+        GM_addStyle(`
+          [data-testid="category-link"]>span {font-size:13px;}
+          [data-testid="category-link"] {
+                                         margin: 0px 0px;
+                                         padding: 4px 0px;
+                                        }
+
+         [data-testid="categories-title"]+hr+div      {max-height: 100%;}
+        `);
+   // fix results sidebar
+        GM_addStyle(`
+          [data-testid^="parent-category-sidecar-"]>span {font-size:13px;}
+          [data-testid^="parent-category-sidecar-"] {
+                                         margin: 0px 0px;
+                                         padding: 4px 0px;
+                                        }
+
+         [data-testid="categories-title"]+hr+div      {max-height: 100%;}
+        `);
+    // fix famiiles
+        GM_addStyle(`
+          [data-testid="subcategories-items"]>span {
+                                                    font-size:14px;
+                                                   }
+          [data-testid="subcategories-items"]{
+                                                 padding: 0px 0px;
+                                                 margin: 0px 0px;
+                                                }
+          [data-testid="subcategories-container"]>li {
+                                         margin: 0px 0px;
+                                         padding: 0px 0px;
+                                        }
+          [data-testid="subcategories-items"]>span>span{
+                                                       font-size: 12px;
+                                                       }
+        `);
+    // fix category font size
+          GM_addStyle(`
+             [data-testid^="parent-category-container"]>span {font-size:18px;}
+          `);
+    // fix top results
+          GM_addStyle(`
+             [data-testid^="category-card-"]>div>div>div:nth-of-type(2)>div>div:nth-of-type(1) {font-size:13px; padding-bottom:3px;}
+             [data-testid^="category-card-"]>div>div>div:nth-of-type(2)>div>div:nth-of-type(3) {font-size:13px; padding-top:2px;}
+
+          `);
+
+   waitForKeyElements('[data-testid="result-top"]', addTopResultsPreview, true);
+}
+
+
+
+
 
 
 const mouseClickEvents = ['mousedown', 'click', 'mouseup'];
@@ -364,6 +543,17 @@ function waitForKeyElements (
         }
     }
     waitForKeyElements.controlObj   = controlObj;
+}
+
+
+// Loging function
+function _log(somestring, detailed_logging, textcolor, bgcolor) {
+    if (detailed_logging == null) detailed_logging = true;
+    try {
+        if (detailed_logging == true) { console.log('%c' + (Date.now() - starttimestamp) + 'ms ' + (Date.now() - sincelast) + '[as] ' + somestring, 'background: ' + bgcolor + '; color:' + textcolor + ';'); }
+        var sincelast = Date.now();
+    }
+    catch (err) { }
 }
 
 
