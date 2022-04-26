@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    http://tampermonkey.net/
-// @version      0.1.8.1
+// @version      0.1.8.2
 // @description  try to take over the world!
 // @author       You
 // @match        https://www.digikey.com/en/products*
@@ -21,12 +21,13 @@
 //changelog
 // 0.1.7  adding image hover preview for top results
 // 0.1.8.1 fixed HTML datasheet text color
+// 0.1.8.2  hover pdp attributes
 
 var DLOG = true;
 var starttimestamp = Date.now();
 var sincelast = Date.now();
 var version = GM_info.script.version;
-var lastUpdate = '21-APR-22'; // I usually forget this
+var lastUpdate = '26-APR-22'; // I usually forget this
 // var $ = $; //supresses warnings in tampermonkey
 
 (function() {
@@ -137,6 +138,13 @@ function doImageTooltip(){
 }
 
 
+function addPDPRowHoverHighlight(){
+   GM_addStyle(`
+       [data-testid="product-attributes"] tr:hover {
+                                                    background-color:rgb(60, 42, 42);
+                                                    }
+   `);
+}
 
 function addPDPImageZoom(){
 console.log('image style started');
@@ -279,6 +287,7 @@ function runPDP(){
     waitForKeyElements('[data-testid="price-and-procure-title"]',doAfterPricingLoad);
     addPDPImageZoom();
     loadHTMLDatasheets();
+    addPDPRowHoverHighlight();
     //rightAlignCols();
     // waitForKeyElements('[data-testid="price-and-procure-title"]',zeroStockOtherSuppliers);
 }
@@ -393,6 +402,7 @@ function runIndexResults(){
                                         }
 
          [data-testid="categories-title"]+hr+div      {max-height: 100%;}
+         [data-testid="categories-title"] {padding: 0px 0px 7px 0px;}
         `);
    // fix results sidebar
         GM_addStyle(`
@@ -403,6 +413,8 @@ function runIndexResults(){
                                         }
 
          [data-testid="categories-title"]+hr+div      {max-height: 100%;}
+         [data-testid="categories-title"] {padding: 0px 0px 7px 0px;}
+
         `);
     // fix famiiles
         GM_addStyle(`
@@ -432,10 +444,30 @@ function runIndexResults(){
 
           `);
 
+    // one column in results instead of two
+         GM_addStyle(`
+            [data-testid="subcategories-container"] {column-count:1}
+            [data-testid="subcategories-items"] span { line-height: 20px;}
+            [data-testid="result-page"] hr, [data-testid="index-page"] hr { margin-top:-6px !important; margin-bottom:4px !important;}
+            [data-testid="result-page"] a {margin: 0px;}
+            [data-testid="subcategories-container"] {margin: 0px 0px 18px !important;}
+         `)
+          GM_addStyle(`
+             .MuiContainer-maxWidthLg {max-width:1500px;}
+          `);
+   moveResultsCount();
    waitForKeyElements('[data-testid="result-top"]', addTopResultsPreview, true);
 }
 
-
+function moveResultsCount(){
+   var results = $('[data-testid="search-results-component"]');
+    $('[data-testid="result-top"] section').prepend(results);
+    results.find('p').text(results.find('p').text().replace('Showing ', ''));
+    console.log('found count '+ results.text());
+    GM_addStyle(`
+       [data-testid="search-results-component"] p {font-size:14px;}
+    `);
+}
 
 
 
