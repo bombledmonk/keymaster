@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    http://tampermonkey.net/
-// @version      0.1.8.2
+// @version      0.1.8.3
 // @description  try to take over the world!
 // @author       You
 // @match        https://www.digikey.com/en/products*
@@ -22,12 +22,18 @@
 // 0.1.7  adding image hover preview for top results
 // 0.1.8.1 fixed HTML datasheet text color
 // 0.1.8.2  hover pdp attributes
+// 0.1.8.3  added partially working category count, results count formatting
+
+//TODO  fix dynamic category count
+//TODO  Add dynamic top results image preview
+
+
 
 var DLOG = true;
 var starttimestamp = Date.now();
 var sincelast = Date.now();
 var version = GM_info.script.version;
-var lastUpdate = '26-APR-22'; // I usually forget this
+var lastUpdate = '28-APR-22'; // I usually forget this
 // var $ = $; //supresses warnings in tampermonkey
 
 (function() {
@@ -76,7 +82,9 @@ function runPLP(){
     trimTableWhiteSpace();
     hideCompareText();
     biggerThumbnail();
+    try{
     addDarkReader();
+    }catch(e){}
 }
 
 function addResourceCSS() {
@@ -107,6 +115,29 @@ function configTooltips(){
     });
 }
 
+// function l(){console.log(console.info(arguments.callee))};
+
+function addCategoryCount(){
+    console.log('adding category count');
+    console.log(arguments.callee.name);
+    // l();
+    GM_addStyle(`
+    .catsum { padding: 0px 20px; color:rgb(189, 181, 170); font-size:14px !important;}
+    `);
+    $('[data-testid="subcategories-container"]').each(function(){
+        // console.log(getCategoryFamilySum($(this)), $(this).prev().prev().text());
+        var catsum = getCategoryFamilySum($(this));
+        $(this).prev().prev().append('<span class="catsum">'+ catsum+ ' items</span>');
+    });
+}
+
+function getCategoryFamilySum($category){
+    var sum = 0;
+    $category.find('a>span>span').each(function(){
+        sum = sum + parseInt($(this).text());
+    });
+    return sum;
+}
 
 function addTopResultsPreview(){
     // $('[data-testid="result-top"]')
@@ -166,6 +197,7 @@ console.log('image style added');
 }
 
 function addDarkReader(){
+DarkReader.setFetchMethod(window.fetch);
     DarkReader.enable({
         brightness: 100,
         contrast: 90,
@@ -448,7 +480,7 @@ function runIndexResults(){
          GM_addStyle(`
             [data-testid="subcategories-container"] {column-count:1}
             [data-testid="subcategories-items"] span { line-height: 20px;}
-            [data-testid="result-page"] hr, [data-testid="index-page"] hr { margin-top:-6px !important; margin-bottom:4px !important;}
+            [data-testid="result-page"] hr, [data-testid="index-page"] hr { margin-top:-6px !important; margin-bottom:4px !important; display:none;}
             [data-testid="result-page"] a {margin: 0px;}
             [data-testid="subcategories-container"] {margin: 0px 0px 18px !important;}
          `)
@@ -456,16 +488,18 @@ function runIndexResults(){
              .MuiContainer-maxWidthLg {max-width:1500px;}
           `);
    moveResultsCount();
+   addCategoryCount();
    waitForKeyElements('[data-testid="result-top"]', addTopResultsPreview, true);
 }
 
 function moveResultsCount(){
    var results = $('[data-testid="search-results-component"]');
     $('[data-testid="result-top"] section').prepend(results);
-    results.find('p').text(results.find('p').text().replace('Showing ', ''));
+    //replace text showing, the first double quote, and the last double quote as to preserve any " in the search term
+    results.find('p').text(results.find('p').text().replace('Showing ', '').replace(/\"/,'').replace(/\"$/g,''));
     console.log('found count '+ results.text());
     GM_addStyle(`
-       [data-testid="search-results-component"] p {font-size:14px;}
+       [data-testid="search-results-component"] p {font-size:16px;}
     `);
 }
 
