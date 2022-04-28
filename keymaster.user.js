@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         Digi-Key-Master
-// @namespace    http://tampermonkey.net/
-// @version      0.1.8.3
-// @description  try to take over the world!
-// @author       You
+// @namespace    https://hest.pro
+// @version      0.1.8.4
+// @description  An Augmentation for Digi-Key's new website
+// @author       Ben Hest
 // @match        https://www.digikey.com/en/products*
 // @icon         https://www.google.com/s2/favicons?domain=digikey.com
 // @require      https://code.jquery.com/jquery-3.6.0.js
@@ -13,6 +13,7 @@
 // @resource     tooltipstercss https://cdnjs.cloudflare.com/ajax/libs/tooltipster/4.2.8/css/tooltipster.bundle.min.css
 // @grant        GM_addStyle
 // @grant        GM_getResourceURL
+// @downloadURL  https://github.com/bombledmonk/keymaster/raw/master/keymaster.user.js
 //
 // @noframes
 // ==/UserScript==
@@ -23,6 +24,7 @@
 // 0.1.8.1 fixed HTML datasheet text color
 // 0.1.8.2  hover pdp attributes
 // 0.1.8.3  added partially working category count, results count formatting
+// 0.1.8.4 changed some meta info mostly
 
 //TODO  fix dynamic category count
 //TODO  Add dynamic top results image preview
