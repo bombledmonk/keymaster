@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    https://hest.pro
-// @version      0.1.8.4
+// @version      0.1.8.5
 // @description  An Augmentation for Digi-Key's new website
 // @author       Ben Hest
 // @match        https://www.digikey.com/en/products*
@@ -25,6 +25,7 @@
 // 0.1.8.2  hover pdp attributes
 // 0.1.8.3  added partially working category count, results count formatting
 // 0.1.8.4 changed some meta info mostly
+// 0.1.8.5 added version to header logo for now
 
 //TODO  fix dynamic category count
 //TODO  Add dynamic top results image preview
@@ -43,7 +44,7 @@ var lastUpdate = '28-APR-22'; // I usually forget this
     // a('th[data-id="1989"]>div>div>span>div>span')[0].innerHTML = "Part</br>Status";
     // $('div["data-table-0-product-description"]');  /// document.create style g
     // document.create('style')
-
+    $('.header__logo').attr('title', "Keymaster version "+version)
     GM_addStyle(`
          div[data-testid="data-table-0-product-description"] {white-space: nowrap;}
          th[data-id="-8"],td[data-atag="tr-supplier"] {display:none;}
