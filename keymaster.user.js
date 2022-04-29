@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    https://hest.pro
-// @version      0.1.8.5
+// @version      0.1.9.0
 // @description  An Augmentation for Digi-Key's new website
 // @author       Ben Hest
 // @match        https://www.digikey.com/en/products*
@@ -26,9 +26,13 @@
 // 0.1.8.3  added partially working category count, results count formatting
 // 0.1.8.4 changed some meta info mostly
 // 0.1.8.5 added version to header logo for now
+// 0.1.9.0 added family image hover, fixed dynamic category count
 
-//TODO  fix dynamic category count
 //TODO  Add dynamic top results image preview
+//TODO think about n-level highlighting
+//TODO add dynamic family info on hover
+//TODO expand on dynamic family info hover
+
 
 
 
@@ -120,18 +124,20 @@ function configTooltips(){
 
 // function l(){console.log(console.info(arguments.callee))};
 
-function addCategoryCount(){
-    console.log('adding category count');
+function addCategoryCount($item){
+    console.log('adding category count', $item );
     console.log(arguments.callee.name);
     // l();
     GM_addStyle(`
     .catsum { padding: 0px 20px; color:rgb(189, 181, 170); font-size:14px !important;}
     `);
-    $('[data-testid="subcategories-container"]').each(function(){
+    // $('[data-testid="subcategories-container"]').each(function(){
+    var catsum = getCategoryFamilySum($item);
+    console.log('category count', catsum );
         // console.log(getCategoryFamilySum($(this)), $(this).prev().prev().text());
-        var catsum = getCategoryFamilySum($(this));
-        $(this).prev().prev().append('<span class="catsum">'+ catsum+ ' items</span>');
-    });
+
+        $item.prev().prev().append('<span class="catsum">'+ catsum+ ' items</span>');
+
 }
 
 function getCategoryFamilySum($category){
@@ -157,6 +163,7 @@ function doImageTooltip(){
             'multiple': true,
             'delay': 50,
             'contentCloning': true,
+            'updateAnimation': false,
             'functionReady': function (instance, helper) {
                 console.log(helper.origin.src);
                 instance.content($(helper.origin).clone().height(250).width(250));
@@ -171,7 +178,86 @@ function doImageTooltip(){
         }).tooltipster('open');
 }
 
+//-----------------
+function addFamilyHoverTooltip(){
+   console.log(arguments.callee.name);
+   $('body').on('mouseenter', 'a[data-testid="subcategories-items"]:not(.tooltipstered)', doFamilyTooltip)
+   console.log(arguments.callee.name, ' added');
+}
 
+function doFamilyTooltip(){
+    console.log('dofamilytooltip', this);
+    GM_addStyle(`.tooltipster-content img[data-testid="data-table-0-product-image"] {height:75px !important; width: 75px !important;)}`)
+     $(this).tooltipster({
+            content: '<img width=64px src="https://github.com/bombledmonk/keymaster/blob/master/loading_resistor.gif?raw=true"></br> ...loading...',
+            'contentAsHTML': true,
+            'side': 'right',
+            'distance': 0,
+            'multiple': true,
+            'delay': 500,
+            'contentCloning': true,
+            'updateAnimation': false,
+            'interactive': true,
+            'functionInit': function (instance, helper) {
+                 $.get( helper.origin.href)
+                        .done(function(x){
+                            console.log($(x), ' loaded')
+                            var exampleImages =
+                                    $(x)
+                                    .find('img[data-testid="data-table-0-product-image"]')
+                                    .not('[src*=NoPhoto]');
+
+                            instance.content(deDuplicateCollection( exampleImages,    'src'));
+                            console.log($(x).html());
+                            sessionStorage.setItem(helper.origin.href, true);
+                        }
+                  );
+            },
+            'functionReady': function (instance, helper) {
+                console.log('functionready');
+
+                // instance.content('hello world');
+                // console.log('tooltipfunctionready', helper.origin.href);
+                if(sessionStorage.getItem(helper.origin.href) == null){
+
+
+                }
+                // instance.reposition();
+            },
+        })
+          .tooltipster('open');
+    // $.get( $(this).attr('href'))
+    //                 .done(function(x){
+    //                     console.log($(this), ' loaded')
+    //                     $('body').append($(x).find('img[data-testid="data-table-0-product-image"]'));
+    //                     // instance.content($(this).find('[data-testid="data-table-0-product-image"]'));
+    //                     // console.log($(this).find('img:first').attr('src'));
+    //                     console.log($(x).html());
+    //                 }
+    //             );
+
+}
+
+function deDuplicateCollection($collection, attribute) {
+    //deduplicates a collection of  jquery objects based on an attribute name as a string
+    _log('deDuplicateCollection() Start', DLOG);
+    var found = {};
+    return $collection.filter(function () {
+        var $this = $(this);
+        if (found[$this.attr(attribute)]) {
+            return false;
+        }
+        else {
+            found[$this.attr(attribute)] = true;
+            return true;
+        }
+    });
+    _log('deDuplicateCollection() End', DLOG);
+    return $collection;
+
+}
+
+//----------------------
 function addPDPRowHoverHighlight(){
    GM_addStyle(`
        [data-testid="product-attributes"] tr:hover {
@@ -491,8 +577,10 @@ function runIndexResults(){
              .MuiContainer-maxWidthLg {max-width:1500px;}
           `);
    moveResultsCount();
-   addCategoryCount();
+   // addCategoryCount();
+   waitForKeyElements('[data-testid="subcategories-container"]', addCategoryCount, false);
    waitForKeyElements('[data-testid="result-top"]', addTopResultsPreview, true);
+   addFamilyHoverTooltip();
 }
 
 function moveResultsCount(){
