@@ -1,7 +1,7 @@
-# keymaster
-A script for the new Digi-Key website
+# Keymaster - A New Userscript for Digi-Key's Search
 
-This does very little for now, but does attempt to take whitespace out of the digikey.com UI where it can.  The new site is based off of React which is very hard to create effective userscripts around so big functionality changes may or may not be able to happen.
+
+Keymaster is an experimental userscript built to interact with Digi-Key's current search platform.  The initial goal is was to take whitespace out of pages where it makes sense, but as the experiment progresses new features are being added.
 
 ## Installation
 Make sure Tampermonkey is installed for your respective browser and [Click Here to Install](https://github.com/bombledmonk/keymaster/raw/master/keymaster.user.js)
@@ -15,8 +15,8 @@ Make sure Tampermonkey is installed for your respective browser and [Click Here 
 ![image](https://user-images.githubusercontent.com/4141691/164527180-34328219-44de-4c2f-b1c6-71b0dadee5b8.png)
 
 ### Hover Images
-<image src="https://user-images.githubusercontent.com/4141691/164527412-0504bccc-dda5-46aa-a5a6-452b7ad2fb00.png" height=250px>
-<image src="https://user-images.githubusercontent.com/4141691/164527457-739c29a2-0059-483f-b522-ca36768e9135.png" height=250px>
+<image src="https://user-images.githubusercontent.com/4141691/164527412-0504bccc-dda5-46aa-a5a6-452b7ad2fb00.png" height=250px> <image src="https://user-images.githubusercontent.com/4141691/164527457-739c29a2-0059-483f-b522-ca36768e9135.png" height=250px>
+<image src="https://user-images.githubusercontent.com/4141691/166822775-4953db03-38c1-4485-bd58-26a0649e4a29.png" height=640px>
 
   ### More Compact Layout
 ![image](https://user-images.githubusercontent.com/4141691/164528336-efaf2993-6dca-42a4-8847-fcd2c76b3975.png)
