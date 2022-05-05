@@ -1,10 +1,11 @@
 # Keymaster - A New Userscript for Digi-Key's Search
 
 
-Keymaster is an experimental userscript built to interact with Digi-Key's current search platform.  The initial goal is was to take whitespace out of pages where it makes sense, but as the experiment progresses new features are being added.
+Keymaster is an experimental userscript built to interact with Digi-Key's current search platform.  The initial goal is was to take whitespace out of pages where it makes sense, but as the experiment progresses new features are being added.  Checkout the [project on Github](url)
+
 
 ## Installation
-Make sure Tampermonkey is installed for your respective browser and [Click Here to Install](https://github.com/bombledmonk/keymaster/raw/master/keymaster.user.js)
+Make sure you have Tampermonkey for your respective browser ([Chrome/Edge](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en) or [Firefox](https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/)) and [Click Here to Install](https://github.com/bombledmonk/keymaster/raw/master/keymaster.user.js) the userscript.
 
 ## Features
 
