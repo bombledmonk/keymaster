@@ -1,7 +1,7 @@
 # Keymaster - A New Userscript for Digi-Key's Search
 
 
-Keymaster is an experimental userscript built to interact with Digi-Key's current search platform.  The initial goal is was to take whitespace out of pages where it makes sense, but as the experiment progresses new features are being added.  Checkout the [project on Github](url)
+Keymaster is an experimental userscript built to interact with Digi-Key's current search platform.  The initial goal is was to take whitespace out of pages where it makes sense, but as the experiment progresses new features are being added.  Checkout the [project on Github](url) or the [Digi-Key forum](https://forum.digikey.com/t/keymaster-a-new-userscript-for-digi-keys-search/22114).
 
 
 ## Installation
