@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    https://hest.pro
-// @version      0.1.9.0
-// @description  An Augmentation for Digi-Key's new website
+// @version      0.1.9.1
+// @description  An Augmentation for Digi-Key's new search
 // @author       Ben Hest
 // @match        https://www.digikey.com/en/products*
 // @icon         https://www.google.com/s2/favicons?domain=digikey.com
@@ -27,12 +27,23 @@
 // 0.1.8.4 changed some meta info mostly
 // 0.1.8.5 added version to header logo for now
 // 0.1.9.0 added family image hover, fixed dynamic category count
+// 0.1.9.1 added PLP price hover
+
 
 //TODO  Add dynamic top results image preview
 //TODO think about n-level highlighting
 //TODO add dynamic family info on hover
 //TODO expand on dynamic family info hover
+//TODO maybe add price break helper/optimizer
 
+
+// Tip for anyone else who wants to Understand the data-containing objects on the DK webpage
+// The __NEXT_DATA__ script contains the javascript object with all the data needed for a given webpage.
+// Each page, Index/Results, PDP (detail page), and PLP (filters page) have different data models, they can be
+// explored by pasting the following two lines in the console:
+
+// var pagedata = __NEXT_DATA__.props.pageProps.envelope.data;
+// console.log(pagedata);
 
 
 
@@ -40,7 +51,7 @@ var DLOG = true;
 var starttimestamp = Date.now();
 var sincelast = Date.now();
 var version = GM_info.script.version;
-var lastUpdate = '28-APR-22'; // I usually forget this
+var lastUpdate = '10-May-22'; // I usually forget this
 // var $ = $; //supresses warnings in tampermonkey
 
 (function() {
@@ -78,7 +89,7 @@ var lastUpdate = '28-APR-22'; // I usually forget this
     }
     runIndexResults();
     addResourceCSS();
-
+    // console.log('nextdata here zzz', __NEXT_DATA__.props.pageProps.envelope.data.filters);
 })();
 
 function runPLP(){
@@ -89,6 +100,7 @@ function runPLP(){
     trimTableWhiteSpace();
     hideCompareText();
     biggerThumbnail();
+    addPLPPricingHover();
     try{
     addDarkReader();
     }catch(e){}
@@ -226,15 +238,6 @@ function doFamilyTooltip(){
             },
         })
           .tooltipster('open');
-    // $.get( $(this).attr('href'))
-    //                 .done(function(x){
-    //                     console.log($(this), ' loaded')
-    //                     $('body').append($(x).find('img[data-testid="data-table-0-product-image"]'));
-    //                     // instance.content($(this).find('[data-testid="data-table-0-product-image"]'));
-    //                     // console.log($(this).find('img:first').attr('src'));
-    //                     console.log($(x).html());
-    //                 }
-    //             );
 
 }
 
@@ -326,17 +329,18 @@ function trimTableWhiteSpace(){
 }
 
 function supplierMatch(){
+    //TODO I don't think this is needed anymore with OneUI
     console.log('runing supplier match');
     $('tr[data-testid="data-table-0-row"]').each(function(i,x){
-        console.log('row');
+        // console.log('row');
         try{
 
             var supplier = $(x).find('td[data-atag="tr-supplier"] a');
             var manufacturer = $(x).find('td[data-atag="tr-manufacturer"]');
             var qty = $(x).find('td[data-atag="tr-qtyAvailable"]');
-            console.log(supplier);
+            // console.log(supplier);
             if (supplier.text().trim() !== manufacturer.text().trim()){
-                console.log(supplier.text());
+                // console.log(supplier.text());
                 manufacturer.append('<br>');
                 supplier.attr('title', supplier.text());
                 supplier.text('🇲 🇵')
@@ -405,13 +409,15 @@ function runPDP(){
     removeSupplier();
     removeLeadTime();
     removeMFRPN();
-    waitForKeyElements('[data-testid="price-and-procure-title"]',doAfterPricingLoad);
+    waitForKeyElements('[data-testid="price-and-procure-title"]',doAfterPricingLoad, true);
     addPDPImageZoom();
     loadHTMLDatasheets();
     addPDPRowHoverHighlight();
     //rightAlignCols();
     // waitForKeyElements('[data-testid="price-and-procure-title"]',zeroStockOtherSuppliers);
 }
+
+
 
 function removeSupplier(){
    GM_addStyle(`
@@ -508,9 +514,55 @@ function loadHTMLDatasheets(){
 }
 
 
+function addPLPPricingHover(){
+  //data-testid="pricing-group"
+     $('body').on('mouseenter', '[data-atag="tr-unitPrice"]:not(.tooltipstered)', doPriceTooltip)
+
+}
 
 
+function doPriceTooltip(){
 
+    //TODO check out why pricing isn't coming back or if pricing might be hidden on the page in fallback form
+    console.log('doPriceTooltip', this);
+    // GM_addStyle(`.tooltipster-content img[data-testid="data-table-0-product-image"] {height:75px !important; width: 75px !important;)}`)
+     $(this).tooltipster({
+            content: '<img width=64px src="https://github.com/bombledmonk/keymaster/blob/master/loading_resistor.gif?raw=true"></br> ...loading...',
+            'contentAsHTML': true,
+            'side': 'right',
+            'distance': 0,
+            'multiple': true,
+            'delay': 500,
+            'contentCloning': true,
+            'updateAnimation': false,
+            'interactive': true,
+            'functionInit': function (instance, helper) {
+                // console.log('init price tooltip', $(helper.origin).closest('tr').find('a[data-testid="data-table-0-product-number"]').attr('href');
+                var pdplink= $(helper.origin).closest('tr').find('a[data-testid="data-table-0-product-number"]:first').attr('href');
+                console.log(pdplink);
+                 $.get( pdplink, function(x){
+                                             var pdptext = JSON.parse($(x)[61].innerHTML);
+                                             var pdpdata  = pdptext.props.pageProps.envelope.data;
+                                             var productId = pdpdata.productOverview.rolledUpProductId
+                                              console.log('thisprice', $(x)[61].innerHTML, $(x).find('[id*=NEXT]'));
+                                              console.log('pdptext ', pdptext.props.pageProps.envelope.data);
+                                             var quantityTable = pdptext.props.pageProps.envelope.data.quantityTable
+                                             // var pricehtml = instance.content('<table id="'+productId+'" >');
+                                             var tablehtml = '<table>' + '<tr><th>Break</th><th>price</th></tr>'
+                                             $('#'+productId).append('<tr><th>Break</th><th>price</th>')
+                                             quantityTable.reverse().forEach(function(item){
+                                                 if(item.packTypeCode != 243){
+                                                     tablehtml = tablehtml+ ('<tr><td>'+item.breakQty+'</td><td>'+item.unitPrice+'</td></tr>')
+                                                 }
+                                             });
+                                             tablehtml = tablehtml + '</table>';
+                                             instance.content(tablehtml);
+                                           });
+            },
+        })
+          .tooltipster('open');
+
+}
 
 
 function runIndexResults(){
