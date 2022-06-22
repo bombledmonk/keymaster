@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    https://hest.pro
-// @version      0.1.9.1
+// @version      0.1.9.2
 // @description  An Augmentation for Digi-Key's new search
 // @author       Ben Hest
 // @match        https://www.digikey.com/en/products*
@@ -51,7 +51,7 @@ var DLOG = true;
 var starttimestamp = Date.now();
 var sincelast = Date.now();
 var version = GM_info.script.version;
-var lastUpdate = '10-May-22'; // I usually forget this
+var lastUpdate = '22-Jun-22'; // I usually forget this
 // var $ = $; //supresses warnings in tampermonkey
 
 (function() {
@@ -89,6 +89,7 @@ var lastUpdate = '10-May-22'; // I usually forget this
     }
     runIndexResults();
     addResourceCSS();
+    redrawCategoryPage();
     // console.log('nextdata here zzz', __NEXT_DATA__.props.pageProps.envelope.data.filters);
 })();
 
@@ -164,6 +165,58 @@ function addTopResultsPreview(){
     // $('[data-testid="result-top"]')
    $('body').on('mouseenter', '[data-testid="result-top"] img:not(.tooltipstered)', doImageTooltip)
 }
+
+
+function redrawCategoryPage(){
+    GM_addStyle(`
+    [data-testid="image-view"] img {
+                                     height: 175px !important;
+                                     width:175px !important;
+
+                                   }
+    [data-testid="image-view"]>a>div {
+                                     background-size: 100%;
+                                     background-repeat: no-repeat;
+                                   }
+    [data-testid="image-view"]>a>div, [data-testid="image-view"]>a>div>div     {
+        height:100%;
+    }
+ /* The semi-transparent background behind family name text */
+     [data-testid="image-view"]>a>div>div>div:nth-child(2) { background-color: rgb(1,1,1, .8);}
+
+ /* change item count font size*/
+      [data-testid="image-view"] p:nth-child(2) { font-size: 12px;}
+      [data-testid="image-view"] p:nth-child(1) { font-size: 14px;}
+
+     [data-testid="category-page"]>div>h1 {display:none;}
+    `);
+    $('[data-testid="image-view"]').each(function(){
+        var img = $(this).find('img:first');
+        var imgsrc = img.attr('src');
+        // console.log(imgsrc);
+        // $(this).find('a>div:first').css({'background-image':'url('+imgsrc+')'});
+        console.log($(this).find('a').attr('href'));
+    });
+    $('[ref_page_event="Select Family"]').prev().css('margin-top','0px');
+    $('[ref_page_event="Select Family"]').parent().parent().css('padding','0px')
+
+    //hide category title
+    $('[ref_page_event="Select Family"]').prev().hide();
+    largerBreadcrumbs();
+    moveResultsCountToBreadcrumbs();
+}
+
+function largerBreadcrumbs(){
+    GM_addStyle(`
+      .MuiBreadcrumbs-ol a, .MuiBreadcrumbs-ol p { font-size: 16px !important;}
+    `);
+}
+
+function moveResultsCountToBreadcrumbs(){
+ var separator = $('.MuiBreadcrumbs-separator:first').clone();
+ $('.MuiBreadcrumbs-ol').append(separator).append($('[data-testid="category-page"] span:first'));
+}
+
 
 function doImageTooltip(){
     // console.log('body entered for tooltip', this);
@@ -411,12 +464,16 @@ function runPDP(){
     removeMFRPN();
     waitForKeyElements('[data-testid="price-and-procure-title"]',doAfterPricingLoad, true);
     addPDPImageZoom();
-    loadHTMLDatasheets();
     addPDPRowHoverHighlight();
     //rightAlignCols();
     // waitForKeyElements('[data-testid="price-and-procure-title"]',zeroStockOtherSuppliers);
 }
 
+function doAfterPricingLoad(){
+    addNonStock();
+    zeroStockOtherSuppliers();
+    loadHTMLDatasheets();
+}
 
 
 function removeSupplier(){
@@ -442,7 +499,7 @@ function removeMFRPN(){
 
 function addNonStock(){
     if($('[data-testid="price-and-procure-title"] span').text().startsWith('Available')){
-        $('[data-testid="price-and-procure-title"] span').text("Availble to Order - Non-Stock")
+        $('[data-testid="price-and-procure-title"] span').text("Non-Stock - Availble to Order")
     }
 }
 
@@ -489,10 +546,7 @@ function zeroStockOtherSuppliers(){
     }
 }
 
-function doAfterPricingLoad(){
-    addNonStock();
-    zeroStockOtherSuppliers();
-}
+
 
 
 function loadHTMLDatasheets(){
@@ -571,7 +625,7 @@ function runIndexResults(){
           [data-testid="category-link"]>span {font-size:13px;}
           [data-testid="category-link"] {
                                          margin: 0px 0px;
-                                         padding: 4px 0px;
+                                         padding: 3px 0px;
                                         }
 
          [data-testid="categories-title"]+hr+div      {max-height: 100%;}
@@ -582,7 +636,7 @@ function runIndexResults(){
           [data-testid^="parent-category-sidecar-"]>span {font-size:13px;}
           [data-testid^="parent-category-sidecar-"] {
                                          margin: 0px 0px;
-                                         padding: 4px 0px;
+                                         padding: 3px 0px;
                                         }
 
          [data-testid="categories-title"]+hr+div      {max-height: 100%;}
