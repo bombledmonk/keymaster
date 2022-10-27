@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    https://hest.pro
-// @version      0.1.9.2
+// @version      0.1.9.3
 // @description  An Augmentation for Digi-Key's new search
 // @author       Ben Hest
 // @match        https://www.digikey.com/en/products*
@@ -10,6 +10,7 @@
 // @require      https://unpkg.com/darkreader@4.9.44/darkreader.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jquery.hoverintent/1.10.2/jquery.hoverIntent.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/tooltipster/4.2.8/js/tooltipster.bundle.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.es6.min.js
 // @resource     tooltipstercss https://cdnjs.cloudflare.com/ajax/libs/tooltipster/4.2.8/css/tooltipster.bundle.min.css
 // @grant        GM_addStyle
 // @grant        GM_getResourceURL
@@ -28,6 +29,7 @@
 // 0.1.8.5 added version to header logo for now
 // 0.1.9.0 added family image hover, fixed dynamic category count
 // 0.1.9.1 added PLP price hover
+// 0.1.9.3 added compacted PLP, removed price hover
 
 
 //TODO  Add dynamic top results image preview
@@ -51,7 +53,7 @@ var DLOG = true;
 var starttimestamp = Date.now();
 var sincelast = Date.now();
 var version = GM_info.script.version;
-var lastUpdate = '22-Jun-22'; // I usually forget this
+var lastUpdate = '27-OCT-22'; // I usually forget this
 // var $ = $; //supresses warnings in tampermonkey
 
 (function() {
@@ -63,6 +65,7 @@ var lastUpdate = '22-Jun-22'; // I usually forget this
     GM_addStyle(`
          div[data-testid="data-table-0-product-description"] {white-space: nowrap;}
          th[data-id="-8"],td[data-atag="tr-supplier"] {display:none;}
+         td[data-atag="tr-qtyAvailable"]>div {min-width:60px;}
          td[data-atag="tr-manufacturer"] {
              word-wrap: break-word;
              max-width: 15ch;
@@ -71,12 +74,23 @@ var lastUpdate = '22-Jun-22'; // I usually forget this
              word-wrap: break-word !important;
              max-width: 15ch;
              white-space:unset;
+             text-align:center;
          }
+
+         table[data-testid="data-table-0"]>thead>tr>th>div {
+             justify-content: center
+         }
+         section[data-testid="filter-page"]>div>section>div { margin-top:2px;}
 
     `);
     // $('td[data-atag="tr-qtyAvailable"]').each(function(){$(this).innerHTML($(this).text().replace('-','<br>'))}); //keep
+
+    $('[data-testid="per-page-selector-container"]').parent().parent().parent().css('padding','8px 16px');
+    $('[data-testid="filter-common-0"]').parent().parent().css('padding', '6px 16px');
     // Your code here...
     $('button[data-testid="sort--8-asc"]').closest('th').attr('data-id','-8');
+
+
 
     // $('table[data-testid="data-table-0"]>thead>tr>th').addclass('.css({'word-wrap': 'break-word', 'max-width': '15ch', 'white-space':'unset'});
     // $('td[data-atag="tr-manufacturer"]').
@@ -90,6 +104,8 @@ var lastUpdate = '22-Jun-22'; // I usually forget this
     runIndexResults();
     addResourceCSS();
     redrawCategoryPage();
+    addHighlighting();
+    setInterval(addHighlighting, 1500);
     // console.log('nextdata here zzz', __NEXT_DATA__.props.pageProps.envelope.data.filters);
 })();
 
@@ -101,7 +117,11 @@ function runPLP(){
     trimTableWhiteSpace();
     hideCompareText();
     biggerThumbnail();
-    addPLPPricingHover();
+    //addPLPPricingHover();
+    moveSearchWithin();
+    moveFilterToggle();
+    widerColumns();
+
     try{
     addDarkReader();
     }catch(e){}
@@ -137,6 +157,25 @@ function configTooltips(){
 
 // function l(){console.log(console.info(arguments.callee))};
 
+function widerColumns(){
+    GM_addStyle(`th[data-id="884"] {min-width:145px;} `);  // Surface Mount Land Size
+}
+
+function addHighlighting(){
+    $('body').unmark()
+    var searchterm = $('.header__searchinput').val();
+    $('body').mark(searchterm);
+
+}
+
+function moveSearchWithin(){
+    $('[ref_page_event="Search Within Results"]').insertAfter($('[data-testid="apply-all-button"]').parent());
+}
+
+function moveFilterToggle(){
+ $('[data-testid="switch-filter-options"]').parent().insertBefore($('[data-testid="share-popup-trigger"]'));
+}
+
 function addCategoryCount($item){
     console.log('adding category count', $item );
     console.log(arguments.callee.name);
@@ -153,6 +192,10 @@ function addCategoryCount($item){
 
 }
 
+function hidePackageCol(){
+    $('[data-testid="sort--5-asc"]').closest('th').hide();
+    GM_Style(`th[data-id="-5"], td[data-atag="tr-packaging"] { display:none}`);
+}
 function getCategoryFamilySum($category){
     var sum = 0;
     $category.find('a>span>span').each(function(){
@@ -188,7 +231,7 @@ function redrawCategoryPage(){
       [data-testid="image-view"] p:nth-child(2) { font-size: 12px;}
       [data-testid="image-view"] p:nth-child(1) { font-size: 14px;}
 
-     [data-testid="category-page"]>div>h1 {display:none;}
+     main>section>div>h1 {display:none;}
     `);
     $('[data-testid="image-view"]').each(function(){
         var img = $(this).find('img:first');
@@ -214,7 +257,7 @@ function largerBreadcrumbs(){
 
 function moveResultsCountToBreadcrumbs(){
  var separator = $('.MuiBreadcrumbs-separator:first').clone();
- $('.MuiBreadcrumbs-ol').append(separator).append($('[data-testid="category-page"] span:first'));
+ $('.MuiBreadcrumbs-ol').append(separator).append($('[data-testid="static-product-count"]').parent().css('font-size','16px'));
 }
 
 
@@ -595,12 +638,13 @@ function doPriceTooltip(){
                 var pdplink= $(helper.origin).closest('tr').find('a[data-testid="data-table-0-product-number"]:first').attr('href');
                 console.log(pdplink);
                  $.get( pdplink, function(x){
+                                             console.log('whats this', $(x));
                                              var pdptext = JSON.parse($(x)[61].innerHTML);
                                              var pdpdata  = pdptext.props.pageProps.envelope.data;
-                                             var productId = pdpdata.productOverview.rolledUpProductId
+                                             var productId = pdpdata.productOverview.rolledUpProductId;
                                               console.log('thisprice', $(x)[61].innerHTML, $(x).find('[id*=NEXT]'));
                                               console.log('pdptext ', pdptext.props.pageProps.envelope.data);
-                                             var quantityTable = pdptext.props.pageProps.envelope.data.quantityTable
+                                             var quantityTable = pdptext.props.pageProps.envelope.data.quantityTable;
                                              // var pricehtml = instance.content('<table id="'+productId+'" >');
                                              var tablehtml = '<table>' + '<tr><th>Break</th><th>price</th></tr>'
                                              $('#'+productId).append('<tr><th>Break</th><th>price</th>')
@@ -622,12 +666,13 @@ function doPriceTooltip(){
 function runIndexResults(){
     //fix index sidebar
         GM_addStyle(`
-          [data-testid="category-link"]>span {font-size:13px;}
-          [data-testid="category-link"] {
-                                         margin: 0px 0px;
-                                         padding: 3px 0px;
-                                        }
-
+          [data-testid="category-li"]>a {
+            font-size:13px;
+            width:100%;
+            height:95%;
+          }
+          [data-testid="category-li"]:hover{background-color: #15539c ;}
+         [data-testid="category-li"] {line-height: 22px ;}
          [data-testid="categories-title"]+hr+div      {max-height: 100%;}
          [data-testid="categories-title"] {padding: 0px 0px 7px 0px;}
         `);
@@ -645,7 +690,7 @@ function runIndexResults(){
         `);
     // fix famiiles
         GM_addStyle(`
-          [data-testid="subcategories-items"]>span {
+          [class*="NthLevelCategory-categoryListItem"]>a {
                                                     font-size:14px;
                                                    }
           [data-testid="subcategories-items"]{
@@ -656,7 +701,7 @@ function runIndexResults(){
                                          margin: 0px 0px;
                                          padding: 0px 0px;
                                         }
-          [data-testid="subcategories-items"]>span>span{
+          [class*="NthLevelCategory-categoryListItem"]>a>span{
                                                        font-size: 12px;
                                                        }
         `);
@@ -673,8 +718,8 @@ function runIndexResults(){
 
     // one column in results instead of two
          GM_addStyle(`
-            [data-testid="subcategories-container"] {column-count:1}
-            [data-testid="subcategories-items"] span { line-height: 20px;}
+            [data-testid*="n-lvl-ul"] {column-count:1}
+            [data-testid*="NthLevelCategory-categoryListItem"] span { line-height: 20px;}
             [data-testid="result-page"] hr, [data-testid="index-page"] hr { margin-top:-6px !important; margin-bottom:4px !important; display:none;}
             [data-testid="result-page"] a {margin: 0px;}
             [data-testid="subcategories-container"] {margin: 0px 0px 18px !important;}
