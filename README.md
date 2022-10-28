@@ -20,4 +20,7 @@ Make sure you have Tampermonkey for your respective browser ([Chrome/Edge](https
 <image src="https://user-images.githubusercontent.com/4141691/166822775-4953db03-38c1-4485-bd58-26a0649e4a29.png" height=640px>
 
   ### More Compact Layout
-![image](https://user-images.githubusercontent.com/4141691/164528336-efaf2993-6dca-42a4-8847-fcd2c76b3975.png)
+![image](https://user-images.githubusercontent.com/4141691/198400132-527e0793-8f75-4385-bc44-881994121dbd.png)
+
+### Single Column Index
+  ![image](https://user-images.githubusercontent.com/4141691/198399592-62b53354-3d45-442e-98bc-6d117b32d618.png)
