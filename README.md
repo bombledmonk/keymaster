@@ -24,3 +24,6 @@ Make sure you have Tampermonkey for your respective browser ([Chrome/Edge](https
 
 ### Single Column Index
   ![image](https://user-images.githubusercontent.com/4141691/198399592-62b53354-3d45-442e-98bc-6d117b32d618.png)
+
+### Better Category Imagery
+  ![image](https://user-images.githubusercontent.com/4141691/210097621-d9aacd6d-b499-4689-919b-c4a7f3ee2de0.png)
