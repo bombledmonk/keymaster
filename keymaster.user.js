@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    https://hest.pro
-// @version      0.1.9.3
+// @version      0.1.9.4
 // @description  An Augmentation for Digi-Key's new search
 // @author       Ben Hest
 // @match        https://www.digikey.com/en/products*
@@ -11,6 +11,7 @@
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jquery.hoverintent/1.10.2/jquery.hoverIntent.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/tooltipster/4.2.8/js/tooltipster.bundle.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.es6.min.js
+// @require      https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js
 // @resource     tooltipstercss https://cdnjs.cloudflare.com/ajax/libs/tooltipster/4.2.8/css/tooltipster.bundle.min.css
 // @grant        GM_addStyle
 // @grant        GM_getResourceURL
@@ -30,13 +31,15 @@
 // 0.1.9.0 added family image hover, fixed dynamic category count
 // 0.1.9.1 added PLP price hover
 // 0.1.9.3 added compacted PLP, removed price hover
-
+// 0.1.9.4 fixed up text highlighting
 
 //TODO  Add dynamic top results image preview
 //TODO think about n-level highlighting
 //TODO add dynamic family info on hover
 //TODO expand on dynamic family info hover
 //TODO maybe add price break helper/optimizer
+//TODO move nlevel product count to the right.
+
 
 
 // Tip for anyone else who wants to Understand the data-containing objects on the DK webpage
@@ -53,7 +56,7 @@ var DLOG = true;
 var starttimestamp = Date.now();
 var sincelast = Date.now();
 var version = GM_info.script.version;
-var lastUpdate = '27-OCT-22'; // I usually forget this
+var lastUpdate = '30-DEC-22'; // I usually forget this
 // var $ = $; //supresses warnings in tampermonkey
 
 (function() {
@@ -81,7 +84,7 @@ var lastUpdate = '27-OCT-22'; // I usually forget this
              justify-content: center
          }
          section[data-testid="filter-page"]>div>section>div { margin-top:2px;}
-
+         hr { display:none;}
     `);
     // $('td[data-atag="tr-qtyAvailable"]').each(function(){$(this).innerHTML($(this).text().replace('-','<br>'))}); //keep
 
@@ -91,7 +94,10 @@ var lastUpdate = '27-OCT-22'; // I usually forget this
     $('button[data-testid="sort--8-asc"]').closest('th').attr('data-id','-8');
 
 
-
+    GM_addStyle(`[data-testid="price-quantity-input-container"] {
+                                                                  margin-left: 440px;
+                                                                  position:absolute;
+                                                                  }`); // nudge pricing quatntity box
     // $('table[data-testid="data-table-0"]>thead>tr>th').addclass('.css({'word-wrap': 'break-word', 'max-width': '15ch', 'white-space':'unset'});
     // $('td[data-atag="tr-manufacturer"]').
     runPLP();
@@ -105,7 +111,6 @@ var lastUpdate = '27-OCT-22'; // I usually forget this
     addResourceCSS();
     redrawCategoryPage();
     addHighlighting();
-    setInterval(addHighlighting, 1500);
     // console.log('nextdata here zzz', __NEXT_DATA__.props.pageProps.envelope.data.filters);
 })();
 
@@ -121,6 +126,7 @@ function runPLP(){
     moveSearchWithin();
     moveFilterToggle();
     widerColumns();
+    hidePackageCol();
 
     try{
     addDarkReader();
@@ -162,10 +168,61 @@ function widerColumns(){
 }
 
 function addHighlighting(){
-    $('body').unmark()
-    var searchterm = $('.header__searchinput').val();
-    $('body').mark(searchterm);
+    _log('adding highlighting');
+    GM_addStyle(`mark { background: #BFEA8BCC !important;  color:#000c !important;}`);
+    var changeflag = 0;
 
+    doMark();
+    // setInterval(addHighlighting, 1500);
+    // $('.header__searchinput').keyup(function(){
+    //     //debouncery();
+    //     _.debounce(doMark, 500);
+    //     // _log('keypress');
+    //     // _.debounce((changflag)=> {_log('debouncerun'); doMark();}, 200)
+    //     // _log('kepress done');
+    // });
+
+    // var db = _.debnounce(doMark, 500);
+    $('.header__searchinput').on('keyup', _.debounce(doMark,500,false));
+
+    window.addEventListener('scroll', _.throttle(doMark, 1000));
+
+//     window.addEventListener('popstate', function (event) {
+// 	    setTimeout(doMark, 3500);
+//     });
+
+    let previousUrl = '';
+    const observer = new MutationObserver(function(mutations) {
+        if (location.href !== previousUrl) {
+            previousUrl = location.href;
+            console.log(`URL changed to ${location.href}`);
+            doMark();
+            setTimeout(doMark, 3500);
+        }
+    });
+    const config = {subtree: true, childList: true};
+    observer.observe(document, config)
+
+    // $('body').unmark()
+_log('end add highlighting');
+}
+
+
+
+function doMark(){
+        // _log('a;slkdjfal;sjdf;lajsdf;lkjas;dlkj');
+        $('body').unmark()
+        var searchterm = $('.header__searchinput').val();
+        console.log(searchterm + ' changed');
+        $('body').mark(searchterm);
+}
+
+function doMark2(){
+        // _log('a;slkdjfal;sjdf;lajsdf;lkjas;dlkj');
+        $('body').unmark()
+        var searchterm = $('.header__searchinput').val();
+        console.log(searchterm + ' changed ');
+        $('body').mark(searchterm);
 }
 
 function moveSearchWithin(){
@@ -194,7 +251,7 @@ function addCategoryCount($item){
 
 function hidePackageCol(){
     $('[data-testid="sort--5-asc"]').closest('th').hide();
-    GM_Style(`th[data-id="-5"], td[data-atag="tr-packaging"] { display:none}`);
+    GM_addStyle(`th[data-id="-5"], td[data-atag="tr-packaging"] { display:none}`);
 }
 function getCategoryFamilySum($category){
     var sum = 0;
@@ -289,7 +346,7 @@ function doImageTooltip(){
 //-----------------
 function addFamilyHoverTooltip(){
    console.log(arguments.callee.name);
-   $('body').on('mouseenter', 'a[data-testid="subcategories-items"]:not(.tooltipstered)', doFamilyTooltip)
+   $('body').on('mouseenter', 'ul[data-testid="n-lvl-ul-0"] a:not(.tooltipstered)', doFamilyTooltip)
    console.log(arguments.callee.name, ' added');
 }
 
@@ -313,7 +370,9 @@ function doFamilyTooltip(){
                             var exampleImages =
                                     $(x)
                                     .find('img[data-testid="data-table-0-product-image"]')
-                                    .not('[src*=NoPhoto]');
+                                    .not('[src*=NoPhoto]')
+                                    .attr('height', '75px')
+                                    .attr('width', '75px');
 
                             instance.content(deDuplicateCollection( exampleImages,    'src'));
                             console.log($(x).html());
@@ -596,7 +655,7 @@ function loadHTMLDatasheets(){
     try{
         // Your code here...
         var htmldatasheet = document.querySelectorAll('a[href*="htmldatasheets"')[0].href;
-        console.log(htmldatasheet);
+        console.log('html datasheet link', htmldatasheet);
 
         $('main').append('<div id="htmlds">hello world</div>');
         $('#htmlds').load(htmldatasheet, function(){
