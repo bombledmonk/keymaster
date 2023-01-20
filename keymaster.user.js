@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    https://hest.pro
-// @version      0.1.9.4
+// @version      0.1.9.5
 // @description  An Augmentation for Digi-Key's new search
 // @author       Ben Hest
 // @match        https://www.digikey.com/en/products*
@@ -32,6 +32,7 @@
 // 0.1.9.1 added PLP price hover
 // 0.1.9.3 added compacted PLP, removed price hover
 // 0.1.9.4 fixed up text highlighting
+// 0.1.9.5 fixed more docs count
 
 //TODO  Add dynamic top results image preview
 //TODO think about n-level highlighting
@@ -621,7 +622,7 @@ function addMoreDocs(){
     `);
     $('[data-testid="datasheet-download"]').after('<a class=moredocs href=#docsmedia>');
     $('[data-testid="docs-media-table"]').attr('id', 'docsmedia')
-    $('.moredocs').text('(see '+$('[data-testid="docs-media-table"] table tbody a').length +' more docs)')
+    $('.moredocs').text('(see '+($('[data-testid="docs-media-table"] table tbody a').length-1) +' more docs)')
 }
 
 function dimPackaging(){
