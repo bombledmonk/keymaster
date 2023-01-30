@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    https://hest.pro
-// @version      0.1.9.5
+// @version      0.1.9.6
 // @description  An Augmentation for Digi-Key's new search
 // @author       Ben Hest
 // @match        https://www.digikey.com/en/products*
@@ -33,6 +33,8 @@
 // 0.1.9.3 added compacted PLP, removed price hover
 // 0.1.9.4 fixed up text highlighting
 // 0.1.9.5 fixed more docs count
+// 0.1.9.6 changed :visited link color
+
 
 //TODO  Add dynamic top results image preview
 //TODO think about n-level highlighting
@@ -40,6 +42,7 @@
 //TODO expand on dynamic family info hover
 //TODO maybe add price break helper/optimizer
 //TODO move nlevel product count to the right.
+//TODO move HTML Datasheet links next to datasheet links
 
 
 
@@ -57,7 +60,7 @@ var DLOG = true;
 var starttimestamp = Date.now();
 var sincelast = Date.now();
 var version = GM_info.script.version;
-var lastUpdate = '30-DEC-22'; // I usually forget this
+var lastUpdate = '30-JAN-23'; // I usually forget this
 // var $ = $; //supresses warnings in tampermonkey
 
 (function() {
@@ -86,6 +89,7 @@ var lastUpdate = '30-DEC-22'; // I usually forget this
          }
          section[data-testid="filter-page"]>div>section>div { margin-top:2px;}
          hr { display:none;}
+         body a:visited {color:#ac96ac;}
     `);
     // $('td[data-atag="tr-qtyAvailable"]').each(function(){$(this).innerHTML($(this).text().replace('-','<br>'))}); //keep
 
