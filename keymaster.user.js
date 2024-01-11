@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
 // @namespace    https://hest.dev
-// @version      0.1.9.7
+// @version      0.1.9.8
 // @description  An Augmentation for Digi-Key's new search
 // @author       Ben Hest
 // @match        https://www.digikey.com/en/products*
@@ -35,6 +35,7 @@
 // 0.1.9.5 fixed more docs count
 // 0.1.9.6 changed :visited link color
 // 0.1.9.7 fixed index image hover
+// 0.1.9.8 fixed html datasheet on pdp
 
 
 //TODO  Add dynamic top results image preview
@@ -135,7 +136,8 @@ function runPLP(){
     hidePackageCol();
     addAddToCartButtonPLP();
     try{
-    addDarkReader();
+        console.log('try adding darkreader');
+        // addDarkReader();
     }catch(e){}
 }
 
@@ -473,7 +475,11 @@ function deDuplicateCollection($collection, attribute) {
 function addPDPRowHoverHighlight(){
    GM_addStyle(`
        [data-testid="product-attributes"] tr:hover {
-                                                    background-color:rgb(60, 42, 42);
+                                                    background-color:rgb(150, 150, 150);
+                                                    color:white;
+                                                    }
+       [data-testid="product-attributes"] tr:hover div{
+                                                    color:white;
                                                     }
    `);
 }
@@ -498,17 +504,18 @@ console.log('image style added');
 }
 
 function addDarkReader(){
+
 DarkReader.setFetchMethod(window.fetch);
     DarkReader.enable({
         brightness: 100,
         contrast: 90,
         sepia: 10
     });
-DarkReader.exclude('css', '#datasheet-maincontainer');
+DarkReader.exclude('css', '#htmlds');
 // Get the generated CSS of Dark Reader returned as a string.
 
-    DarkReader.addDynamicSiteRule('exclude', '#datasheet-maincontainer');
-console.log(CSS);
+DarkReader.addDynamicSiteRule('exclude', '#htmlds');
+// console.log(CSS);
 }
 
 function descriptionNoWrap(){
@@ -621,7 +628,7 @@ function runPDP(){
     removeSupplier();
     removeLeadTime();
     removeMFRPN();
-    waitForKeyElements('[data-testid="price-and-procure-title"]',doAfterPricingLoad, true);
+    waitForKeyElements('[data-testid="order-form"]',doAfterPricingLoad, true);
     addPDPImageZoom();
     addPDPRowHoverHighlight();
     //rightAlignCols();
@@ -718,13 +725,18 @@ function loadHTMLDatasheets(){
         $('#htmlds').load(htmldatasheet, function(){
             $(this).find('#header,#footer').hide();
         });
-        GM_addStyle(`
-        .fc0 {color: rgba(13, 8, 0, 0.95) !important;}
-        `);
-        DarkReader.exclude('css', '#datasheet-maincontainer');
+        // GM_addStyle(`
+        //  .fc0 {
+        //     filter: invert(100%);
+        //     background-color: white !important;
+        //     color: black !important;
+        //     /* Add other properties to reset DarkReader effects */
+        //     }
+        // `);
+        // DarkReader.exclude('css', '#htmldsr');
 // Get the generated CSS of Dark Reader returned as a string.
 
-    DarkReader.addDynamicSiteRule('exclude', '#datasheet-maincontainer');
+    // DarkReader.addDynamicSiteRule('exclude', '#htmlds');
     }catch(e){
         console.log('error loading html datasheet');
     }
