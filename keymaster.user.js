@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Digi-Key-Master
-// @namespace    https://hest.pro
-// @version      0.1.9.6
+// @namespace    https://hest.dev
+// @version      0.1.9.7
 // @description  An Augmentation for Digi-Key's new search
 // @author       Ben Hest
 // @match        https://www.digikey.com/en/products*
@@ -34,6 +34,7 @@
 // 0.1.9.4 fixed up text highlighting
 // 0.1.9.5 fixed more docs count
 // 0.1.9.6 changed :visited link color
+// 0.1.9.7 fixed index image hover
 
 
 //TODO  Add dynamic top results image preview
@@ -132,7 +133,7 @@ function runPLP(){
     moveFilterToggle();
     widerColumns();
     hidePackageCol();
-
+    addAddToCartButtonPLP();
     try{
     addDarkReader();
     }catch(e){}
@@ -170,6 +171,33 @@ function configTooltips(){
 
 function widerColumns(){
     GM_addStyle(`th[data-id="884"] {min-width:145px;} `);  // Surface Mount Land Size
+}
+
+function addAddToCartButtonPLP(){
+    var intervalId = setInterval(function() {
+        if ($('#compare-button-wrapper').is(':visible')) {
+            clearInterval(intervalId);
+            var compareButton = $('#compare-button-wrapper button');
+            var addToCartButton = $('<a id="add-to-cart-btn" class="MuiButtonBase-root MuiButton-root jss62 MuiButton-contained MuiButton-containedPrimary" tabindex="0" type="button"><span class="MuiButton-label">Add to cart</span></a>');
+            addToCartButton.insertAfter(compareButton);
+        }
+    }, 500);
+
+    $('table').on('change', 'input[type="checkbox"]', function() {
+        var checked = $('table input[type="checkbox"]:checked');
+        if (checked.length > 0) {
+            var url = 'https://www.digikey.com/classic/ordering/fastadd.aspx?';
+            checked.each(function(i) {
+                var row = $(this).closest('tr');
+                var partNumber = row.find('a[data-testid="data-table-product-number"]').text();
+                var quantity = 'qty' + (i+1);
+                url += 'part' + (i+1) + '=' + encodeURIComponent(partNumber) + '&' + quantity + '=1&';
+            });
+            url = url.slice(0, -1); // remove the last '&'
+            $('#add-to-cart-btn').attr('href', url);
+            console.log(url);
+        }
+    });
 }
 
 function addHighlighting(){
@@ -369,24 +397,45 @@ function doFamilyTooltip(){
             'updateAnimation': false,
             'interactive': true,
             'functionInit': function (instance, helper) {
+                // instance.content('<iframe src="'+helper.origin.href+'">')
+                 var famname = helper;
+                console.log('helper',helper.origin.innerText);
+
                  $.get( helper.origin.href)
                         .done(function(x){
                             console.log($(x), ' loaded')
                             var exampleImages =
                                     $(x)
-                                    .find('img[data-testid="data-table-0-product-image"]')
+                                    .find('img[data-testid="data-table-product-image"]')
                                     .not('[src*=NoPhoto]')
                                     .attr('height', '75px')
                                     .attr('width', '75px');
 
                             instance.content(deDuplicateCollection( exampleImages,    'src'));
-                            console.log($(x).html());
+                            console.log('html '+$(x).html());
                             sessionStorage.setItem(helper.origin.href, true);
                         }
                   );
+
+
+//                 $.get( helper.origin.href)
+//                         .done(function(x){
+//                             console.log($(x), ' loaded')
+//                             var exampleImages =
+//                                     $(x)
+//                                     .find('img[data-testid="data-table-0-product-image"]')
+//                                     .not('[src*=NoPhoto]')
+//                                     .attr('height', '75px')
+//                                     .attr('width', '75px');
+
+//                             instance.content(deDuplicateCollection( exampleImages,    'src'));
+//                             console.log('html '+$(x).html());
+//                             sessionStorage.setItem(helper.origin.href, true);
+//                         }
+//                   );
             },
             'functionReady': function (instance, helper) {
-                console.log('functionready');
+                console.log('tooltipster functionready');
 
                 // instance.content('hello world');
                 // console.log('tooltipfunctionready', helper.origin.href);
@@ -455,7 +504,10 @@ DarkReader.setFetchMethod(window.fetch);
         contrast: 90,
         sepia: 10
     });
+DarkReader.exclude('css', '#datasheet-maincontainer');
 // Get the generated CSS of Dark Reader returned as a string.
+
+    DarkReader.addDynamicSiteRule('exclude', '#datasheet-maincontainer');
 console.log(CSS);
 }
 
@@ -669,6 +721,10 @@ function loadHTMLDatasheets(){
         GM_addStyle(`
         .fc0 {color: rgba(13, 8, 0, 0.95) !important;}
         `);
+        DarkReader.exclude('css', '#datasheet-maincontainer');
+// Get the generated CSS of Dark Reader returned as a string.
+
+    DarkReader.addDynamicSiteRule('exclude', '#datasheet-maincontainer');
     }catch(e){
         console.log('error loading html datasheet');
     }
